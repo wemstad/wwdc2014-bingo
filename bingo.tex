@@ -15,16 +15,30 @@
 \seq_new:N \l_my_tmp_items_seq
 \seq_new:N \g_my_randomized_seq
 \int_new:N \l_tmp_int
+\tl_new:N \tl_raw
+\ior_new:N \io_stream
+
 \msg_new:nnnn {bingo} {Too~few~items!} {Provide~at~least~24~items!}{}
 
 \cs_generate_variant:Nn \seq_item:Nn {Nx}
 \cs_generate_variant:Nn \seq_remove_all:Nn {Nx}
 
-\NewDocumentCommand {\myItems} {m}
+\NewDocumentCommand {\myItems} {}
     {
-      \seq_clear:N \g_my_items_seq % clear item list
-      \seq_gset_split:Nnn \g_my_items_seq {;} {#1} % put item list in seq
-      \int_compare:nNnT {\seq_count:N \g_my_items_seq} < {24} {\msg_error:nn {bingo} {Too~few~items!}} % check whether there are enough items
+        % Opens up a new stream of the file to read into the token list \tl_raw.
+        \ior_open:Nn \io_stream {cards.csv}
+        \ior_get:NN \io_stream \tl_raw
+        \ior_close:N \io_stream
+
+        \seq_clear:N \g_my_items_seq % clear item list
+        % put token list into sequence by splitting it on a ,
+        \seq_gset_split:NnV \g_my_items_seq {,} \tl_raw 
+
+        % Debug output, prints the content of
+        %sequence
+        %\seq_show:N \g_my_items_seq
+
+        \int_compare:nNnT {\seq_count:N \g_my_items_seq} < {24} {\msg_error:nn {bingo} {Too~few~items!}} % check whether there are enough items
     }
 
 \NewDocumentCommand{\setItems}{}
@@ -33,9 +47,9 @@
 \prg_replicate:nn {24} %generate random list of 24 items
     {
         \int_set:Nn \l_tmp_int {\seq_count:N \l_my_tmp_items_seq}% set current length of list
-        \setrannum{\randomnum}{1}{\int_use:N \l_tmp_int} % choose random num up to length of seq
-        \seq_put_right:Nx \g_my_randomized_seq {\seq_item:Nn \l_my_tmp_items_seq {\the\randomnum}}% grab corresponding item and put in tmp seq
-        \seq_remove_all:Nx \l_my_tmp_items_seq {\seq_item:Nn \l_my_tmp_items_seq {\the\randomnum}}%delete that item from temp seq
+        \setrannum {\randomnum} {1} {\int_use:N \l_tmp_int}
+        \seq_put_right:Nx \g_my_randomized_seq {\seq_item:Nn \l_my_tmp_items_seq {\the\randomnum}}
+        \seq_remove_all:Nx \l_my_tmp_items_seq {\seq_item:Nn \l_my_tmp_items_seq {\the\randomnum}}
     }
 \seq_clear:N \l_my_tmp_items_seq %clear temp seq when done
 }
@@ -64,9 +78,10 @@ align=center,
 
 \begin{document}
 %\myItems{this;will;produce;an;error;because;there;aren't;enough;items}
-\myItems{radioactivity;$\alpha$ particle;$\gamma$-ray;in--situ leaching;half--life, $t_{\frac{1}{2}}$;GM counter;Manhattan Project;$3-5$ \%;$^{232}$Th;breeder;greenhouse gas;ICP--MS;conversion;solid;Rocky Flats;smoke detector;Trinity;START;Yucca Mountain;Chart of Nuclides;Chernobyl;Savannah River Site;Hanford Site;PUREX;UO$_2$;Y--12;Bq;LSC;gaseous diffusion}
+%\myItems{radioactivity;$\alpha$ particle;$\gamma$-ray;in--situ leaching;half--life, $t_{\frac{1}{2}}$;GM counter;Manhattan Project;$3-5$ \%;$^{232}$Th;breeder;greenhouse gas;ICP--MS;conversion;solid;Rocky Flats;smoke detector;Trinity;START;Yucca Mountain;Chart of Nuclides;Chernobyl;Savannah River Site;Hanford Site;PUREX;UO$_2$;Y--12;Bq;LSC;gaseous diffusion}
+\myItems
 
-%\myItems{cards.txt}
+
 
 \setItems
 
