@@ -20,49 +20,48 @@
 \ior_new:N \io_stream
 
 \msg_new:nnnn {bingo} {Too~few~items!} {Provide~at~least~24~items!}{}
-\msg_new:nnnn {test} {This is a test} {another test}{}
 
 \cs_generate_variant:Nn \seq_item:Nn {Nx}
 \cs_generate_variant:Nn \seq_remove_all:Nn {Nx}
 
 \NewDocumentCommand {\myItems} {}
-    {
-        \seq_clear:N \g_my_items_seq % clear item list
+{
+    \seq_clear:N \g_my_items_seq % clear item list
 
-        % Opens up a new stream of the file to read into the token list \tl_raw.
-        \ior_open:Nn \io_stream {cards.csv}
+    % Opens up a new stream of the file to read into the token list \tl_raw.
+    \ior_open:Nn \io_stream {cards.csv}
+    \ior_get:NN \io_stream \tl_raw
+    \bool_do_until:nn {\ior_if_eof_p:N {\io_stream}} {
+        \seq_clear:N \g_tmp
+        \seq_set_split:NnV \g_tmp {,} \tl_raw
+        \seq_concat:NNN \g_my_items_seq \g_my_items_seq \g_tmp
         \ior_get:NN \io_stream \tl_raw
-        \bool_do_until:nn {\ior_if_eof_p:N {\io_stream}} {
-            \seq_clear:N \g_tmp
-            \seq_set_split:NnV \g_tmp {we_want_whole_line} \tl_raw
-            \seq_concat:NNN \g_my_items_seq \g_my_items_seq \g_tmp
-            \ior_get:NN \io_stream \tl_raw
-            %\seq_show:N \g_my_items_seq
-        }
-        \ior_close:N \io_stream
-
-        % check whether there are enough items
-        \int_compare:nNnT {\seq_count:N \g_my_items_seq} < {24} {\msg_error:nn {bingo} {Too~few~items!}}
+        %\seq_show:N \g_my_items_seq
     }
+    \ior_close:N \io_stream
+
+    % check whether there are enough items
+    \int_compare:nNnT {\seq_count:N \g_my_items_seq} < {24} {\msg_error:nn {bingo} {Too~few~items!}}
+}
 
 \NewDocumentCommand{\setItems}{}
 {
-\seq_set_eq:NN \l_my_tmp_items_seq \g_my_items_seq % put in temp seq so that multiple cards can be produced
-\prg_replicate:nn {24} %generate random list of 24 items
+    \seq_set_eq:NN \l_my_tmp_items_seq \g_my_items_seq % put in temp seq so that multiple cards can be produced
+    \prg_replicate:nn {24} %generate random list of 24 items
     {
         \int_set:Nn \l_tmp_int {\seq_count:N \l_my_tmp_items_seq}% set current length of list
         \setrannum {\randomnum} {1} {\int_use:N \l_tmp_int}
         \seq_put_right:Nx \g_my_randomized_seq {\seq_item:Nn \l_my_tmp_items_seq {\the\randomnum}}
         \seq_remove_all:Nx \l_my_tmp_items_seq {\seq_item:Nn \l_my_tmp_items_seq {\the\randomnum}}
     }
-\seq_clear:N \l_my_tmp_items_seq %clear temp seq when done
+    \seq_clear:N \l_my_tmp_items_seq %clear temp seq when done
 }
 
 \NewDocumentCommand {\NodeText}{}
-    {
-        \seq_gpop_right:NN \g_my_randomized_seq \l_tmpa_tl %pop item from randomized seq into token list
-        \tl_use:N \l_tmpa_tl %use that item.
-    }
+{
+    \seq_gpop_right:NN \g_my_randomized_seq \l_tmpa_tl %pop item from randomized seq into token list
+    \tl_use:N \l_tmpa_tl %use that item.
+}
 
 
 \ExplSyntaxOff
@@ -72,35 +71,31 @@
 
 \newcommand{\Size}{3.25cm}
 \tikzset{Square/.style={
-inner sep=0pt,
-text width=\Size,
-minimum size=\Size,
-draw=black,
-align=center,
-}
+        inner sep=0pt,
+        text width=\Size,
+        minimum size=\Size,
+        draw=black,
+        align=center,
+    }
 }
 
 \begin{document}
 \thispagestyle{empty}
-%\myItems{this;will;produce;an;error;because;there;aren't;enough;items}
-%\myItems{radioactivity;$\alpha$ particle;$\gamma$-ray;in--situ leaching;half--life, $t_{\frac{1}{2}}$;GM counter;Manhattan Project;$3-5$ \%;$^{232}$Th;breeder;greenhouse gas;ICP--MS;conversion;solid;Rocky Flats;smoke detector;Trinity;START;Yucca Mountain;Chart of Nuclides;Chernobyl;Savannah River Site;Hanford Site;PUREX;UO$_2$;Y--12;Bq;LSC;gaseous diffusion}
 \myItems
-
-
 
 \setItems
 
 \begin{tikzpicture}[draw=black, thick, x=\Size,y=\Size]
-\foreach \row in \Sequence{%
-    \foreach \col in \Sequence {%
-        \pgfmathtruncatemacro{\value}{\col+\NumOfColumns*(\row-1)}
-        \pgfmathsetmacro{\ColRowProduce}{\col*\row}
-        \IfEq{\ColRowProduce}{9}{% If is center square
-            \node [] at ($(\col,-\row)-(0.5,0.5)$) {FREE};
-        }{
-            \node [Square] at ($(\col,-\row)-(0.5,0.5)$) {\large \NodeText};
+    \foreach \row in \Sequence{%
+        \foreach \col in \Sequence {%
+            \pgfmathtruncatemacro{\value}{\col+\NumOfColumns*(\row-1)}
+            \pgfmathsetmacro{\ColRowProduce}{\col*\row}
+            \IfEq{\ColRowProduce}{9}{% If is center square
+                \node [] at ($(\col,-\row)-(0.5,0.5)$) {\textbf{FREE}};
+            }{
+                \node [Square] at ($(\col,-\row)-(0.5,0.5)$) {\large \NodeText};
+            }
         }
     }
-}
 \end{tikzpicture}
 \end{document}
